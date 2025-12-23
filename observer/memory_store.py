@@ -1,10 +1,3 @@
-"""
-Memory Store for Sentiment Chat App
-
-Handles persistence and retrieval of user memory (sentiments, preferences, facts)
-with confidence decay logic to prioritize recent interactions.
-"""
-
 import os
 import json
 from pathlib import Path
@@ -33,57 +26,37 @@ class MemoryStore:
     DECAY_RATE = 0.95
     MAX_RECENT_SENTIMENTS = 10
     
-    def __init__(self, memory_dir: str = "data/memory"):
+    def __init__(self):
         """
-        Initialize memory store.
-        
-        Args:
-            memory_dir: Directory path for storing user memory files
+        Initialize memory store with volatile in-memory storage.
         """
-        self.memory_dir = Path(memory_dir)
-        self.memory_dir.mkdir(parents=True, exist_ok=True)
+        self._storage = {}  # In-memory storage: user_id -> UserMemory
     
-    def _get_memory_path(self, user_id: str) -> Path:
-        """Get file path for user's memory."""
-        return self.memory_dir / f"{user_id}.json"
+    # Persistence logic removed for Option 2 (Volatile Memory)
     
     def load(self, user_id: str) -> UserMemory:
         """
-        Load user memory from disk.
+        Load user memory from storage.
         
         Args:
             user_id: Unique user identifier
-            
+
         Returns:
-            UserMemory object (empty if file doesn't exist)
+            UserMemory object (new one if not in storage)
         """
-        memory_path = self._get_memory_path(user_id)
+        if user_id not in self._storage:
+            self._storage[user_id] = UserMemory(user_id=user_id)
         
-        if not memory_path.exists():
-            return UserMemory(user_id=user_id)
-        
-        try:
-            with open(memory_path, 'r', encoding='utf-8') as f:
-                data = json.load(f)
-            return UserMemory.from_dict(data)
-        except (json.JSONDecodeError, KeyError) as e:
-            print(f"⚠️ Error loading memory for {user_id}: {e}")
-            return UserMemory(user_id=user_id)
+        return self._storage[user_id]
     
     def save(self, memory: UserMemory) -> None:
         """
-        Save user memory to disk.
+        Update user memory in volatile storage.
         
         Args:
             memory: UserMemory object to persist
         """
-        memory_path = self._get_memory_path(memory.user_id)
-        
-        try:
-            with open(memory_path, 'w', encoding='utf-8') as f:
-                json.dump(memory.to_dict(), f, indent=2, ensure_ascii=False)
-        except Exception as e:
-            print(f"⚠️ Error saving memory for {memory.user_id}: {e}")
+        self._storage[memory.user_id] = memory
     
     def _apply_decay(self, memory: UserMemory) -> None:
         """
@@ -301,14 +274,13 @@ class MemoryStore:
     
     def clear(self, user_id: str) -> None:
         """
-        Clear all memory for a user.
+        Clear all memory for a user from storage.
         
         Args:
             user_id: Unique user identifier
         """
-        memory_path = self._get_memory_path(user_id)
-        if memory_path.exists():
-            memory_path.unlink()
+        if user_id in self._storage:
+            del self._storage[user_id]
 
 
 if __name__ == "__main__":

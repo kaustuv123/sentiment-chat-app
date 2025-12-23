@@ -1,10 +1,3 @@
-"""
-Observer Layer Data Models
-
-Standardizes return types across all observer components (sentiment analyzer, 
-preference extractor, fact extractor) and provides the UserMemory structure 
-for the memory store.
-"""
 
 from dataclasses import dataclass, field
 from typing import List, Dict, Optional, Literal
@@ -142,14 +135,6 @@ class Fact:
     
     @classmethod
     def from_raw_dict(cls, raw: Dict) -> 'Fact':
-        """
-        Convert raw extractor output to Fact instance.
-        
-        Example inputs:
-            {"type": "relationship", "person": "John", "relation": "friend"}
-            {"type": "location", "place": "Seattle", "context": "lives"}
-            {"type": "life_event", "event": "graduated", "date": "2020"}
-        """
         fact_type = raw["type"]
         # Remove 'type' and use remaining fields as data
         data = {k: v for k, v in raw.items() if k != "type"}
